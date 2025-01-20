@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"time"
 
-	// "libnfs-go/log"
+	"bufio"
+	"github.com/smallfz/libnfs-go/log"
 	"math"
 	"reflect"
 )
@@ -64,7 +66,14 @@ type Reader struct {
 }
 
 func NewReader(base io.Reader) *Reader {
-	return &Reader{base: &io.LimitedReader{R: base, N: 0}}
+	x := bufio.NewReader(base)
+	go func() {
+		for {
+			<-time.After(1 * time.Second)
+			log.Infof("Unread bytes: %d", x.Buffered())
+		}
+	}()
+	return &Reader{base: &io.LimitedReader{R: x, N: 0}}
 }
 
 func (r *Reader) Debugf(t string, args ...interface{}) {
